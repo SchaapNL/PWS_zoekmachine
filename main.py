@@ -29,7 +29,7 @@ def get_DOM_from_URL(url):
 def main():
     start_time = time.time()
 
-    url = 'https://en.wikipedia.org/wiki/Cheese'
+    url = 'https://en.wikipedia.org/wiki/Bob_the_Builder'
     text = get_DOM_from_URL(url)
     stem_count_words(text)
 
