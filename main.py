@@ -26,14 +26,24 @@ def main():
     start_time = time.time()
 
     url = 'https://en.wikipedia.org/wiki/Leonhard_Euler'
-    text = get_DOM_from_URL(url).replace('\n', ' ')
-    print(text)
+    text = get_DOM_from_URL(url)
+    count_words(text)
 
     end_time = time.time()
     pycurl_time = end_time - start_time
 
     print('The pycurl_get takes %f' % pycurl_time)
 
+def count_words(text):
+   array = {}
+   for word in text.split():
+      if word in array:
+         array[word] += 1
+      else:
+         array[word] = 1
+
+   for word in array:
+      print(word + ' ' + str(array[word]))
 
 if __name__ == '__main__':
     main()
