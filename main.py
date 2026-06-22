@@ -1,9 +1,7 @@
 import pycurl
 from bs4 import BeautifulSoup
 from io import BytesIO
-
 from nltk.stem import PorterStemmer
-from nltk.tokenize import word_tokenize
 
 
 import time
