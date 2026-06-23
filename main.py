@@ -3,9 +3,7 @@ import string
 import pycurl
 from bs4 import BeautifulSoup
 from io import BytesIO
-
 from nltk.stem import PorterStemmer
-from nltk.tokenize import word_tokenize
 
 
 import time
@@ -35,7 +33,7 @@ def main():
     # commonWords = ['the', 'of', 'and', 'in', 'a', 'in', 'from', 'to', 'is', 'on', 'or', 'by', 'with', 'as', 'are',
     # 'for', 'that', 'may', 'thi', 'be', 'it', 'have', 'can', 'but', 'than']
 
-    url = 'https://en.wikipedia.org/wiki/Cheese'
+    url = 'https://en.wikipedia.org/wiki/Bob_the_Builder'
     text = get_DOM_from_URL(url)
 
     ## filter common words and interpunction

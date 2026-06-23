@@ -1,0 +1,1 @@
+pip install nltk pycurl beautifulsoup4
