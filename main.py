@@ -1,3 +1,5 @@
+import string
+
 import pycurl
 from bs4 import BeautifulSoup
 from io import BytesIO
@@ -28,17 +30,26 @@ def get_DOM_from_URL(url):
 
 def main():
     start_time = time.time()
+    punctuation = ['.', ',', ':', ';', '\"', '\'', '!', '?', '/', '(', ')', '[', ']', '{', '}', '-', '^']
+
+    # commonWords = ['the', 'of', 'and', 'in', 'a', 'in', 'from', 'to', 'is', 'on', 'or', 'by', 'with', 'as', 'are',
+    # 'for', 'that', 'may', 'thi', 'be', 'it', 'have', 'can', 'but', 'than']
 
     url = 'https://en.wikipedia.org/wiki/Cheese'
     text = get_DOM_from_URL(url)
-    stem_count_words(text)
+
+    ## filter common words and interpunction
+    for i in punctuation:
+        text = text.replace(i, ' ')
+
+    stem_freq_words(text)
 
     end_time = time.time()
     pycurl_time = end_time - start_time
 
     print('The pycurl_get takes %f' % pycurl_time)
 
-def stem_count_words(text):
+def stem_freq_words(text):
     ps = PorterStemmer()
     array1 = text.split()
     array2 = {}
@@ -49,9 +60,11 @@ def stem_count_words(text):
         for word in array1:
             word = ps.stem(word)
             if word in array2:
-                array2[word] += 1
+                array2[word] = (array2[word]*len(array1) + 1) / len(array1)
             else:
-                array2[word] = 1
+                array2[word] = 1 / len(array1)
+
+    array2 = {k: v for k, v in sorted(array2.items(), key=lambda item: item[1])}
 
     for word in array2:
         print(word + ' ' + str(array2[word]))
