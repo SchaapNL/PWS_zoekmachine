@@ -1,29 +1,6 @@
-import string
-
-import pycurl
-from bs4 import BeautifulSoup
-from io import BytesIO
 from nltk.stem import PorterStemmer
 
 import time
-
-def get_DOM_from_URL(url):
-    b = BytesIO()
-    c = pycurl.Curl()
-    c.setopt(c.URL, url)
-    c.setopt(c.WRITEDATA, b)
-    c.perform()
-    c.close()
-    body = b.getvalue()
-
-    html = BeautifulSoup(body, 'html.parser')
-    return html.get_text()
-
-    # voor als we ooit het verder willen laten zoeken.
-    # for link in html.find_all('a'):
-    #     print(link.get('href'))
-
-    # print(html.get_text())
 
 def main():
     start_time = time.time()
@@ -32,18 +9,16 @@ def main():
     # commonWords = ['the', 'of', 'and', 'in', 'a', 'in', 'from', 'to', 'is', 'on', 'or', 'by', 'with', 'as', 'are',
     # 'for', 'that', 'may', 'thi', 'be', 'it', 'have', 'can', 'but', 'than']
 
-    url = 'https://en.wikipedia.org/wiki/Bob_the_Builder'
-    text = get_DOM_from_URL(url)
+    query = ''
 
-    ## filter common words and punctuation
+    ## filter punctuation
     for i in punctuation:
-        text = text.replace(i, ' ')
+        query = query.replace(i, ' ')
 
-    stem_freq_words(text)
+    stem_freq_words(query)
 
     end_time = time.time()
     pycurl_time = end_time - start_time
-
     print('The pycurl_get takes %f' % pycurl_time)
 
 def stem_freq_words(text):
@@ -66,8 +41,8 @@ def stem_freq_words(text):
     for word in array2:
         print(word + ' ' + str(array2[word]))
 
+# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
-
