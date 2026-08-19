@@ -1,6 +1,7 @@
 import string
 
 import pycurl
+import DatabaseManager
 from bs4 import BeautifulSoup
 from io import BytesIO
 from nltk.stem import PorterStemmer
@@ -32,6 +33,10 @@ def main():
     # commonWords = ['the', 'of', 'and', 'in', 'a', 'in', 'from', 'to', 'is', 'on', 'or', 'by', 'with', 'as', 'are',
     # 'for', 'that', 'may', 'thi', 'be', 'it', 'have', 'can', 'but', 'than']
 
+    db = DatabaseManager
+    con = db.connect_to_database('zoekmachine.db')
+    db.create_tables(con)
+
     url = 'https://en.wikipedia.org/wiki/Bob_the_Builder'
     text = get_DOM_from_URL(url)
 
@@ -39,12 +44,23 @@ def main():
     for i in punctuation:
         text = text.replace(i, ' ')
 
-    stem_freq_words(text)
+    woord_freq_dict = stem_freq_words(text)
+
+    db.insert_websites(con, url)
+    urlId = db.get_website_id(con, url)
+    db.insert_word_frequencies(con, urlId, woord_freq_dict)
+
+    # print(db.get_words_frequencies_url(con, urlId))
+    lijst = ['bob', 'de', 'builder']
+
+    print(db.get_words_frequencies_list(con, lijst))
+
+    db.close_connection(con)
 
     end_time = time.time()
-    pycurl_time = end_time - start_time
+    f_time = end_time - start_time
 
-    print('The pycurl_get takes %f' % pycurl_time)
+    print('programma duurde %f' % f_time)
 
 def stem_freq_words(text):
     ps = PorterStemmer()
@@ -63,8 +79,8 @@ def stem_freq_words(text):
 
     array2 = {k: v for k, v in sorted(array2.items(), key=lambda item: item[1])}
 
-    for word in array2:
-        print(word + ' ' + str(array2[word]))
+    return array2
+
 
 if __name__ == '__main__':
     main()
