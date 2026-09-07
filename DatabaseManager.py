@@ -78,48 +78,75 @@ def get_website_id(connection, website):
 
     try:
         cursor = connection.cursor()
-        websiteId = cursor.execute('SELECT website_id FROM websites WHERE link = ?', (website,))
+        cursor.execute('SELECT website_id FROM websites WHERE link = ?', (website,))
 
-        connection.commit()
-        return websiteId.fetchone()[0]
+        read = cursor.fetchone()
+        if read is None:
+            return None
+        return read[0]
 
     except Exception as e:
         print(e)
 
-
-def get_words_frequencies_url(connection, websiteId):
-    if type(websiteId) != int:
+def get_words_frequencies_url(connection, website_id):
+    if type(website_id) != int:
         raise ValueError('websiteId must be a int')
 
     try:
         cursor = connection.cursor()
-        words = cursor.execute('SELECT word, hoeveelheid FROM word_frequencies WHERE website_id = ?', (websiteId,))
+        cursor.execute('SELECT word, hoeveelheid FROM word_frequencies WHERE website_id = ?', (website_id,))
 
         connection.commit()
-        return words.fetchall()
+        return cursor.fetchall()
 
     except Exception as e:
         print('get_words_frequencies failed')
         print(e)
 
-def get_words_frequencies_list(connection, words):
-    if type(words) != list:
+def get_words_frequencies_list(connection, word_list):
+    if type(word_list) != list:
         raise ValueError('words must be a list')
+    if len(word_list) == 0:
+        raise ValueError('words must not be empty')
 
     try:
         cursor = connection.cursor()
 
-        placeholders = ",".join("?" for _ in words)
+        placeholders = ','.join(['?'] * len(word_list))
+        cursor.execute(f"SELECT word, hoeveelheid FROM word_frequencies WHERE word IN ({placeholders})", word_list)
 
-        woordFreqDict = cursor.execute(f'SELECT word, hoeveelheid FROM word_frequencies WHERE website_id IN ({placeholders})', (words[0], words[1], words[2],))
-
-        connection.commit()
-        return woordFreqDict.fetchall()
+        return cursor.fetchall()
 
     except Exception as e:
         print('get_words_frequencies_list failed')
         print(e)
 
+def get_amount_of_websites(connection):
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute('SELECT COUNT(website_id) FROM websites')
+
+        return cursor.fetchone()[0]
+
+    except Exception as e:
+        print('get_amount_of_websites failed')
+        print(e)
+
+def get_amount_of_sites_with_word(connection, word):
+    if type(word) != str:
+        raise ValueError('word must be a str')
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute('SELECT COUNT(*) FROM word_frequencies WHERE word = ?', (word,))
+
+        return cursor.fetchone()[0]
+
+    except Exception as e:
+        print('get_amount_of_sites_with_word failed')
+        print(e)
 
 def close_connection(connection):
     try:
