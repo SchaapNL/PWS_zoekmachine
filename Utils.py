@@ -51,3 +51,16 @@ def stem_freq_words(text):
     array2 = {k: v for k, v in sorted(array2.items(), key=lambda item: item[1])}
 
     return array2
+
+
+def stem_words(query):
+    if type(query) != str:
+        raise ValueError('dat was geen string jouw computer doet nu kaboem')
+
+    ps = PorterStemmer()
+    array1 = query.split()
+
+    for i in range(len(array1)):
+        array1[i] = ps.stem(array1[i])
+
+    return array1

@@ -20,7 +20,10 @@ def main():
     con = db.connect_to_database('zoekmachine.db')
     db.create_tables(con)
 
-    sites = ['https://nl.wikipedia.org/wiki/Bob_de_Bouwer', 'https://en.wikipedia.org/wiki/Bob_the_Builder']
+    sites = ['https://nl.wikipedia.org/wiki/Bob_de_Bouwer',
+             'https://en.wikipedia.org/wiki/Bob_the_Builder',
+             'https://nl.wikipedia.org/wiki/Bob_Ross',
+             'https://nl.wikipedia.org/wiki/Bob_Marley']
 
     for site in sites:
         # print(db.get_website_id(con, site))
