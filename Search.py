@@ -4,7 +4,13 @@ import DatabaseManager
 import Utils
 import time
 
-def search(query, con, db):
+def search(query):
+    db = DatabaseManager
+    con = db.connect_to_database('zoekmachine.db')
+
+    query = Utils.remove_punctuation(query)
+    query = Utils.stem_words(query)
+
     # run through words in query and get website id of websites containing a searched word, put id's in array
     # per id in the array, loop through searched words and get frequency in the website,
     # divide by the word rarity and put in dict with key = id and value = freq/rarity, or + it if there is already a value
@@ -40,37 +46,21 @@ def search(query, con, db):
         result_id = [k for k, v in website_imp.items() if v == website_imp[website]][0]
         search_results.append(db.get_website_url(con, result_id))
 
+    db.close_connection(con)
+    return search_results
+
+def main():
+    start_time = time.time()
+
+    query = ('bob de bouwer')
+    search_results = search(query)
+
     if len(search_results) == 0:
         print('no results')
     else:
         print(search_results)
 
-
-
-def main():
-    start_time = time.time()
-    punctuation = ['.', ',', ':', ';', '\"', '\'', '!', '?', '/', '(', ')', '[', ']', '{', '}', '-', '^', '–']
-
-    # commonWords = ['the', 'of', 'and', 'in', 'a', 'in', 'from', 'to', 'is', 'on', 'or', 'by', 'with', 'as', 'are',
-    # 'for', 'that', 'may', 'thi', 'be', 'it', 'have', 'can', 'but', 'than']
-
-    query = ('bob de bouwer')
-
-    ## filter punctuation
-    for i in punctuation:
-        query = query.replace(i, ' ')
-
-    query = Utils.stem_words(query)
-
-    db = DatabaseManager
-    con = db.connect_to_database('zoekmachine.db')
-
-    search(query, con, db)
-
-    db.close_connection(con)
-
     print('The search took %f' % (time.time()- start_time))
-
 
 if __name__ == '__main__':
     main()

@@ -1,1 +1,1 @@
-pip install nltk pycurl beautifulsoup4
+pip install nltk pycurl beautifulsoup4 flask

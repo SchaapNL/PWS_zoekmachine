@@ -1,8 +1,12 @@
 import sqlite3
+import os
 
-def connect_to_database(db_path):
-    if type(db_path) != str:
+def connect_to_database(db_name):
+    if type(db_name) != str:
         raise ValueError('db_path must be a string')
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(base_dir, db_name)
 
     try:
         connection = sqlite3.connect(db_path)

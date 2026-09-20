@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{query}}</title>
+</head>
+<body>
+    <h2>You searched {{query}}</h2>
+    {% if links.__len__() == 0 %}
+    <img src="{{ url_for('static', filename='NoSites.png') }}" alt="No websites found.">
+    {% else %}
+    <ul>
+        {% for link in links %}
+        <li>{{link}}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</body>
+</html>

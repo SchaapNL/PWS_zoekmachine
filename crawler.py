@@ -11,10 +11,6 @@ import Utils
 
 def main():
     start_time = time.time()
-    punctuation = ['.', ',', ':', ';', '\"', '\'', '!', '?', '/', '(', ')', '[', ']', '{', '}', '-', '^', '–']
-
-    # commonWords = ['the', 'of', 'and', 'in', 'a', 'in', 'from', 'to', 'is', 'on', 'or', 'by', 'with', 'as', 'are',
-    # 'for', 'that', 'may', 'thi', 'be', 'it', 'have', 'can', 'but', 'than']
 
     db = DatabaseManager
     con = db.connect_to_database('zoekmachine.db')
@@ -31,9 +27,7 @@ def main():
             continue
 
         text = Utils.get_DOM_from_URL(site)
-
-        for i in punctuation:
-            text = text.replace(i, ' ')
+        text = Utils.remove_punctuation(text)
 
         woord_freq_dict = Utils.stem_freq_words(text)
 
