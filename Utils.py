@@ -15,7 +15,7 @@ def remove_punctuation(text):
     return text
 
 #
-#   Returns the text of in the html of a site.
+#   Returns the HTML in DOM format.
 #
 def get_DOM_from_URL(url):
     b = BytesIO()
@@ -27,7 +27,14 @@ def get_DOM_from_URL(url):
     body = b.getvalue()
 
     html = BeautifulSoup(body, 'html.parser')
-    return html.get_text()
+    return html
+
+#
+#   Returns the text of in the html of a site.
+#
+def get_text_from_URL(url):
+    html = get_DOM_from_URL(url)
+    return html.text
 
 
 #

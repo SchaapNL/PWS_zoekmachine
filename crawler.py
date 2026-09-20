@@ -21,12 +21,20 @@ def main():
              'https://nl.wikipedia.org/wiki/Bob_Ross',
              'https://nl.wikipedia.org/wiki/Bob_Marley']
 
+    #
+    # Voor crawler
+    #
+    # text = Utils.get_DOM_from_URL(sites[0])
+    #
+    # for link in text.find_all('a'):
+    #     print(link.get('href'))
+
     for site in sites:
         # print(db.get_website_id(con, site))
         if db.get_website_id(con, site) is not None:
             continue
 
-        text = Utils.get_DOM_from_URL(site)
+        text = Utils.get_text_from_URL(site)
         text = Utils.remove_punctuation(text)
 
         woord_freq_dict = Utils.stem_freq_words(text)
