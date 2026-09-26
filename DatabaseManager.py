@@ -23,9 +23,10 @@ def create_tables(connection):
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS websites (
                 website_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                link TEXT NOT NULL
+                link TEXT NOT NULL,
+                last_crawled INTEGER
             );
-                ''')
+            ''')
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS word_frequencies (
@@ -58,6 +59,23 @@ def insert_websites(connection, websites):
         print('insert_websites failed')
         print(e)
 
+def update_last_crawled(connection, websiteId, last_crawled):
+    if type(websiteId) != int:
+        raise ValueError('websiteId must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "UPDATE websites SET last_crawled = ? WHERE website_id = ?",
+            (last_crawled, websiteId)
+        )
+
+        connection.commit()
+
+    except Exception as e:
+        print('update_last_crawled failed')
+        print(e)
+
 def insert_word_frequencies(connection, websiteId , woordFreqDict):
     if type(woordFreqDict) != dict:
         raise ValueError('wrong type for woordFreqDict')
@@ -88,6 +106,16 @@ def get_website_id(connection, website):
         if read is None:
             return None
         return read[0]
+
+    except Exception as e:
+        print(e)
+
+def get_all_website_ids(connection):
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SELECT website_id FROM websites')
+
+        return cursor.fetchall()
 
     except Exception as e:
         print(e)

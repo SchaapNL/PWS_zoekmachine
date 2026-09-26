@@ -52,7 +52,7 @@ def search(query):
 def main():
     start_time = time.time()
 
-    query = ('bob de bouwer')
+    query = ('adele')
     search_results = search(query)
 
     if len(search_results) == 0:
