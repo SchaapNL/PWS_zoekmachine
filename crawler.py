@@ -40,11 +40,13 @@ def main():
 
     sites_in_db = [row[0] for row in db.get_all_website_ids(con)]
     sites = []
-    for IDs in sites_in_db:
-        sites.append(db.get_website_url(con, IDs))
+    for ID in sites_in_db:
+        if db.get_last_crawled(con, ID) is None or time.time() - db.get_last_crawled(con,ID) > 604800: # crawls again after a week
+            sites.append(db.get_website_url(con, ID))
 
-    if len(sites) == 0:
+    if len(sites_in_db) == 0:
         sites = ['https://en.wikipedia.org/wiki/Bob_the_Builder']
+
 
 
     for site in sites:
@@ -103,7 +105,7 @@ def main():
                         # print('crawling %s' % site)
 
 
-        #db.update_last_crawled(con, db.get_website_id(con, site), time.time())
+        db.update_last_crawled(con, db.get_website_id(con, site), time.time())
 
 
     db.close_connection(con)

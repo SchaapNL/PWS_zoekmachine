@@ -136,6 +136,22 @@ def get_website_url(connection, website_id):
     except Exception as e:
         print(e)
 
+def get_last_crawled(connection, website_id):
+    if type(website_id) != int:
+        raise ValueError('website_id must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SELECT last_crawled FROM websites WHERE website_id = ?', (website_id,))
+
+        read = cursor.fetchone()
+        if read is None:
+            return None
+        return read[0]
+
+    except Exception as e:
+        print(e)
+
 def get_words_frequencies_url(connection, website_id):
     if type(website_id) != int:
         raise ValueError('websiteId must be a int')
