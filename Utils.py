@@ -26,6 +26,10 @@ def get_DOM_from_URL(url):
     try:
         c.setopt(c.URL, url)
         c.setopt(c.WRITEDATA, b)
+
+        c.setopt(c.CONNECTTIMEOUT, 5)
+        c.setopt(c.TIMEOUT, 10)
+
         c.perform()
         content_type = c.getinfo(c.CONTENT_TYPE)
     except (UnicodeEncodeError, pycurl.error) as e:

@@ -17,10 +17,7 @@ def search():
 
 @app.route('/search/<query>')
 def search_for(query):
-    # return render_template("search.html", query=query)
-
-    links = Search.search_query(query)
-
+    links = Search.search(query)
 
     return render_template("search.html", query = query, links = links)
 

@@ -11,25 +11,64 @@ import Utils
 from DatabaseManager import insert_word_frequencies
 
 def filter_links(links):
+    links.sort()
+    last_robot_txt = {"root": str, "robots.txt": list}
     for link in links:
-        remove_link = False
-        if link.find('wikipedia.org') != -1:
-            # filter non english wiki pages
-            if link.find('en.wikipedia.org') == -1:
-                remove_link = True
-
-            # filter non informative wiki pages
-            filters = ['Portal:', 'Help:', 'Special:', 'Talk:', 'File:', 'title=', 'action=']
-            for f in filters:
-                if link.find(f) != -1:
-                    remove_link = True
-        if remove_link:
+        if 'wikipedia.org' in link and 'en.wikipedia.org' not in link:
             links[links.index(link)] = None
+            continue
+
+        root_url = get_root_url(link)
+        if root_url == last_robot_txt['root']:
+            disallowed_urls = last_robot_txt['robots.txt']
+        else:
+            disallowed_urls = get_disallowed_urls(root_url)
+            last_robot_txt = {"root": root_url, "robots.txt": disallowed_urls}
+
+        for disallowed_url in disallowed_urls:
+            if link.startswith(disallowed_url):
+                links[links.index(link)] = None
+                continue
 
     while None in links:
         links.remove(None)
+
     return links
 
+
+
+def get_root_url(url):
+    # gets the first / after the scheme declaration.
+    end_of_root = url.find('/', len("https://"))
+    # If there are no other /'s in the url it returns -1 ,and you got the complete link otherwise we cut if off after
+    # the next / is found
+
+    return url if end_of_root == -1 else url[:end_of_root]
+
+def get_disallowed_urls(site):
+    root_url = get_root_url(site)
+    robots_txt = Utils.get_text_from_URL(root_url + "/robots.txt")
+
+    if robots_txt is None:
+        return []
+
+    correct_user_agent = False
+    disallowed = []
+    for line in robots_txt.split("\n"):
+        if line is None: continue
+
+        if line.startswith("User-agent: "):
+            if line[len("User-agent: ") :] == "*" or line[len("User-agent: ") :] == "moffel":
+                correct_user_agent = True
+
+            else:
+                correct_user_agent = False
+
+        if correct_user_agent:
+            if line.startswith("Disallow: "):
+                disallowed.append(root_url + line[len("Disallow: "):])
+
+    return disallowed
 
 def main():
     start_time = time.time()
@@ -41,7 +80,7 @@ def main():
     sites_in_db = [row[0] for row in db.get_all_website_ids(con)]
     sites = []
     for ID in sites_in_db:
-        if db.get_last_crawled(con, ID) is None or time.time() - db.get_last_crawled(con,ID) > 604800: # crawls again after a week
+        if db.get_last_crawled(con, ID) is None or time.time() - db.get_last_crawled(con,ID) > 7*24*60*60: # crawls again after a week
             sites.append(db.get_website_url(con, ID))
 
     if len(sites_in_db) == 0:
@@ -52,19 +91,17 @@ def main():
     for site in sites:
         print(db.get_website_id(con, site))
 
-        end_of_root = site.find('/', 8)
-        url_root = site if end_of_root == -1 else site[:end_of_root]
+        url_root = get_root_url(site)
 
         text = Utils.get_DOM_from_URL(site)
         found_links = []
 
         for link in text.find_all('a'):
-            #print(link.get('href'))
             found_links.append(link.get('href'))
 
         for link in found_links:
             if not 'https://' in link and not 'http://' in link:
-                if link.find('/') == 0:
+                if link[:1] == "/":
                     found_links[found_links.index(link)] = url_root + link
                 else:
                     found_links[found_links.index(link)] = None
