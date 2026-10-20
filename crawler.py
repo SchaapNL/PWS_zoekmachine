@@ -1,16 +1,24 @@
-import string
-
-import pycurl
-from bs4 import BeautifulSoup
-from io import BytesIO
-from nltk.stem import PorterStemmer
+import AuthorManager
+import DatabaseManager as db
 
 import time
-import DatabaseManager
 import Utils
-from DatabaseManager import insert_word_frequencies
+import sys
 
-def filter_links(links):
+def handle_links(links, url_root, con):
+    for link in links:
+        if link is None:
+            continue
+
+        if not 'https://' in link and not 'http://' in link:
+            if link[:1] == "/":
+                links[links.index(link)] = url_root + link
+            else:
+                links[links.index(link)] = None
+
+    while None in links:
+        links.remove(None)
+
     links.sort()
     last_robot_txt = {"root": str, "robots.txt": list}
     for link in links:
@@ -18,7 +26,7 @@ def filter_links(links):
             links[links.index(link)] = None
             continue
 
-        root_url = get_root_url(link)
+        root_url = Utils.get_root_url(link)
         if root_url == last_robot_txt['root']:
             disallowed_urls = last_robot_txt['robots.txt']
         else:
@@ -33,25 +41,18 @@ def filter_links(links):
     while None in links:
         links.remove(None)
 
-    return links
-
-
-
-def get_root_url(url):
-    # gets the first / after the scheme declaration.
-    end_of_root = url.find('/', len("https://"))
-    # If there are no other /'s in the url it returns -1 ,and you got the complete link otherwise we cut if off after
-    # the next / is found
-
-    return url if end_of_root == -1 else url[:end_of_root]
+    for link in links:
+        if db.get_website_id(con, link) is None:
+            db.insert_websites(con, link)
 
 def get_disallowed_urls(site):
-    root_url = get_root_url(site)
-    robots_txt = Utils.get_text_from_URL(root_url + "/robots.txt")
+    root_url = Utils.get_root_url(site)
+    robots_txt = Utils.get_website_information(root_url + "/robots.txt")
 
     if robots_txt is None:
         return []
 
+    robots_txt = robots_txt.get("text")
     correct_user_agent = False
     disallowed = []
     for line in robots_txt.split("\n"):
@@ -71,86 +72,105 @@ def get_disallowed_urls(site):
     return disallowed
 
 def main():
+    max_scrape_amount = 1000
+    scrape_limit = False
+    author_via_api = True
+    scrape = False
+
     start_time = time.time()
 
-    db = DatabaseManager
     con = db.connect_to_database('zoekmachine.db')
     db.create_tables(con)
 
-    sites_in_db = [row[0] for row in db.get_all_website_ids(con)]
-    sites = []
-    for ID in sites_in_db:
-        if db.get_last_crawled(con, ID) is None or time.time() - db.get_last_crawled(con,ID) > 7*24*60*60: # crawls again after a week
-            sites.append(db.get_website_url(con, ID))
+    if scrape:
+        sites = db.get_websites_to_crawl(con)
+        if len(sites) <= 0:
+            start_site = 'https://en.wikipedia.org/wiki/Bob_the_Builder'
 
-    if len(sites_in_db) == 0:
-        sites = ['https://en.wikipedia.org/wiki/Bob_the_Builder']
+            if db.get_website_id(con, start_site) is None:
+                db.insert_websites(con, start_site)
+                sites = [[db.get_website_id(con, start_site), start_site]]
 
+        i = 0
 
+        while i < max_scrape_amount or not scrape_limit:
+            i = i + 1
 
-    for site in sites:
-        print(db.get_website_id(con, site))
+            if len(sites) <= 0:
+                sites = get_websites_to_crawl(con)
 
-        url_root = get_root_url(site)
+            site_time = time.time()
+            site = sites.pop()
 
-        text = Utils.get_DOM_from_URL(site)
-        found_links = []
+            scrape_site(site[0], site[1], con)
 
-        for link in text.find_all('a'):
-            found_links.append(link.get('href'))
+            print(f"{i} - {site[1]} took {time.time() - site_time} seconds to scrape.")
 
-        for link in found_links:
-            if not 'https://' in link and not 'http://' in link:
-                if link[:1] == "/":
-                    found_links[found_links.index(link)] = url_root + link
-                else:
-                    found_links[found_links.index(link)] = None
+        print(f"Crawled {max_scrape_amount} websites, in {time.time() - start_time} seconds.")
 
-        while None in found_links:
-            found_links.remove(None)
+    if author_via_api:
+        for author in db.get_unrated_authors(con):
+            site = db.get_website_url(con, author[0])
 
-        found_links = filter_links(found_links)
-        print(found_links)
-        print(len(found_links))
+            authors = AuthorManager.get_authors(site)
+            if authors is not None:
+                for author_info in authors:
 
-        # temporary ---
-        if db.get_website_id(con, site) is None:
-            text = Utils.get_text_from_URL(site)
-            text = Utils.remove_punctuation(text)
+                    score = AuthorManager.get_author_score(author_info) if author_info is not None else -1
+                    db.set_author_score(con, author[0], author[1], float(score))
 
-            word_freq_dict = Utils.stem_freq_words(text)
-
-            db.insert_websites(con, site)
-            site_id = db.get_website_id(con, site)
-            db.insert_word_frequencies(con, site_id, word_freq_dict)
-        # ---
-
-        if len(sites) == 1:
-            for link in found_links:
-                if db.get_website_id(con, link) is None:
-                    # add freq
-                    text = Utils.get_text_from_URL(link)
-
-                    if text is not None:
-                        text = Utils.remove_punctuation(text)
-
-                        word_freq_dict = Utils.stem_freq_words(text)
-
-                        db.insert_websites(con, link)
-                        site_id = db.get_website_id(con, link)
-                        db.insert_word_frequencies(con, site_id, word_freq_dict)
-                        # print('crawling %s' % site)
-
-
-        db.update_last_crawled(con, db.get_website_id(con, site), time.time())
-
+    print(f"{time.time() - start_time} seconds.")
 
     db.close_connection(con)
 
-    end_time = time.time()
-    f_time = end_time - start_time
 
-    print('crawl successful, took %f' % f_time)
+def scrape_site(website_id, url, con):
+    db.clear_word_freq(con, website_id)
+    db.clear_author(con, website_id)
+
+    site_info = Utils.get_website_information(url)
+
+    if site_info is None:
+        db.update_last_crawled(con, website_id, int(time.time()))
+        return
+
+    if site_info.get("text") is not None:
+        text = Utils.remove_punctuation(site_info.get("text"))
+        word_freq_dict = Utils.stem_freq_words(text)
+
+        db.insert_word_frequencies(con, website_id, word_freq_dict)
+
+    if site_info.get("authors") is not None:
+        for author in site_info.get("authors").split(";"):
+            db.insert_author(con, website_id, author, None)
+
+    db.update_last_crawled(con, website_id, int(time.time()))
+
+def get_websites_to_crawl(con):
+    sites = db.get_websites_to_crawl(con)
+
+    if len(sites) > 0:
+        return sites
+
+    website = db.get_site_to_scan_links(con)
+
+    if website is not None:
+        site_info = Utils.get_website_information(website[1])
+
+        if site_info is None:
+            db.update_last_scanned_sites(con, website[0], int(time.time()))
+            return get_websites_to_crawl(con)
+
+        root_url = Utils.get_root_url(website[1])
+        handle_links(site_info.get("links"), root_url, con)
+
+        db.update_last_scanned_sites(con, website[0], int(time.time()))
+
+        return get_websites_to_crawl(con)
+
+    else:
+        sys.exit("All websites were crawled successfully")
+
 
 if __name__ == '__main__':
     main()

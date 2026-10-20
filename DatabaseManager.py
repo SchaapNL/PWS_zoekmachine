@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import time
 
 def connect_to_database(db_name):
     if type(db_name) != str:
@@ -24,7 +25,8 @@ def create_tables(connection):
             CREATE TABLE IF NOT EXISTS websites (
                 website_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 link TEXT NOT NULL,
-                last_crawled INTEGER
+                last_crawled INTEGER,
+                last_scanned_sites INTEGER
             );
             ''')
 
@@ -35,6 +37,14 @@ def create_tables(connection):
                 hoeveelheid REAL NOT NULL
             );
             ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS authors (
+                website_id INTEGER NOT NULL,
+                author TEXT NOT NULL,
+                score INTEGER
+                );
+                ''')
 
         connection.commit()
 
@@ -59,15 +69,17 @@ def insert_websites(connection, websites):
         print('insert_websites failed')
         print(e)
 
-def update_last_crawled(connection, websiteId, last_crawled):
-    if type(websiteId) != int:
+def update_last_crawled(connection, website_id, last_crawled):
+    if type(website_id) != int:
         raise ValueError('websiteId must be an int')
+    if type(last_crawled) != int:
+        raise ValueError('last_crawled must be an int')
 
     try:
         cursor = connection.cursor()
         cursor.execute(
             "UPDATE websites SET last_crawled = ? WHERE website_id = ?",
-            (last_crawled, websiteId)
+            (last_crawled, website_id)
         )
 
         connection.commit()
@@ -76,18 +88,38 @@ def update_last_crawled(connection, websiteId, last_crawled):
         print('update_last_crawled failed')
         print(e)
 
-def insert_word_frequencies(connection, websiteId , woordFreqDict):
-    if type(woordFreqDict) != dict:
-        raise ValueError('wrong type for woordFreqDict')
-    if type(websiteId) != int:
-        raise ValueError('websiteId must be a int')
+def update_last_scanned_sites(connection, website_id, last_crawled_sites):
+    if type(website_id) != int:
+        raise ValueError('websiteId must be an int')
+    if type(last_crawled_sites) != int:
+        raise ValueError('last_crawled_sites must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "UPDATE websites SET last_scanned_sites = ? WHERE website_id = ?",
+            (last_crawled_sites, website_id)
+        )
+
+        connection.commit()
+
+    except Exception as e:
+        print('update_last_crawled_sites failed')
+        print(e)
+
+
+def insert_word_frequencies(connection, website_id, woord_freq_dict):
+    if type(woord_freq_dict) != dict:
+        raise ValueError('wrong type for woord_freq_dict')
+    if type(website_id) != int:
+        raise ValueError('website_id must be a int')
 
     try:
         cursor = connection.cursor()
 
-        for woord, freq in woordFreqDict.items():
+        for woord, freq in woord_freq_dict.items():
             cursor.execute('INSERT INTO word_frequencies (website_id, word, hoeveelheid) VALUES (?, ?, ?)',
-                           (websiteId, woord, freq)
+                           (website_id, woord, freq)
             )
         connection.commit()
 
@@ -115,7 +147,31 @@ def get_all_website_ids(connection):
         cursor = connection.cursor()
         cursor.execute('SELECT website_id FROM websites')
 
-        return cursor.fetchall()
+        return [row[0] for row in cursor.fetchall()]
+
+    except Exception as e:
+        print(e)
+
+def get_websites_to_crawl(connection):
+    try:
+        cursor = connection.cursor()
+
+        week_ago = time.time() - 7*24*60*60
+        cursor.execute(f'SELECT website_id, link FROM websites WHERE last_crawled IS NULL OR last_crawled < {week_ago}')
+
+        return [list(row) for row in cursor.fetchall()]
+
+    except Exception as e:
+        print(e)
+
+def get_site_to_scan_links(connection):
+    try:
+        cursor = connection.cursor()
+
+        week_ago = time.time() - 7*24*60*60
+        cursor.execute(f'SELECT website_id, link FROM websites WHERE last_scanned_sites IS NULL OR last_crawled < {week_ago}')
+
+        return cursor.fetchone()
 
     except Exception as e:
         print(e)
@@ -143,6 +199,22 @@ def get_last_crawled(connection, website_id):
     try:
         cursor = connection.cursor()
         cursor.execute('SELECT last_crawled FROM websites WHERE website_id = ?', (website_id,))
+
+        read = cursor.fetchone()
+        if read is None:
+            return None
+        return read[0]
+
+    except Exception as e:
+        print(e)
+
+def get_last_scanned_site(connection, website_id):
+    if type(website_id) != int:
+        raise ValueError('website_id must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SELECT last_scanned_sites FROM websites WHERE website_id = ?', (website_id,))
 
         read = cursor.fetchone()
         if read is None:
@@ -245,6 +317,98 @@ def get_sites_with_word(connection, word):
 
     except Exception as e:
         print('get_sites_with_word failed')
+        print(e)
+
+def clear_word_freq(connection, website_id):
+    if type(website_id) != int:
+        raise ValueError('website_id must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute('DELETE FROM word_frequencies WHERE website_id = ?', (website_id,))
+
+        return
+
+    except Exception as e:
+        print('clear_site failed')
+        print(e)
+
+def insert_author(connection, website_id, author, score):
+    if type(author) != str:
+        raise ValueError('author must be a string')
+    if type(website_id) != int:
+        raise ValueError('websiteId must be a int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute('INSERT INTO authors (website_id, author, score) VALUES (?, ?, ?)',
+                       (website_id, author, score))
+
+        connection.commit()
+
+    except Exception as e:
+        print('insert_author failed')
+        print(e)
+
+def clear_author(connection, website_id):
+    if type(website_id) != int:
+        raise ValueError('websiteId must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute('DELETE FROM authors WHERE website_id = ?', (website_id,))
+
+        connection.commit()
+        return
+
+    except Exception as e:
+        print('clear_author failed')
+        print(e)
+
+def get_author(connection, website_id):
+    if type(website_id) != int:
+        raise ValueError('websiteId must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SELECT author FROM authors WHERE website_id = ?', (website_id,))
+
+        return cursor.fetchone()
+
+    except Exception as e:
+        print('get_author failed')
+        print(e)
+
+def get_unrated_authors(connection):
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SELECT website_id, author FROM authors WHERE score IS NULL')
+
+        return cursor.fetchall()
+
+    except Exception as e:
+        print('get_unrated_authors failed')
+        print(e)
+
+def set_author_score(connection, website_id, author, score):
+    if type(website_id) != int:
+        raise ValueError('websiteId must be an int')
+    if type(author) != str:
+        raise ValueError('author must be a string')
+    if type(score) != float:
+        raise ValueError('score must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "UPDATE authors SET score = ? WHERE website_id = ? AND author = ?",
+            (score, website_id, author)
+        )
+
+        connection.commit()
+
+    except Exception as e:
+        print('set_author_score failed')
         print(e)
 
 def close_connection(connection):

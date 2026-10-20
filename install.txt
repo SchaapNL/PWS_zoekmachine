@@ -1,1 +1,4 @@
-pip install nltk pycurl beautifulsoup4 flask
+pip install nltk pycurl beautifulsoup4 flask ollama trafilatura
+
+And install ollama model tev1:4b
+(adding how to later)

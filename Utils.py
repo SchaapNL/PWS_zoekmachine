@@ -1,10 +1,12 @@
 import pycurl
+import time
+import json
 
 from bs4 import BeautifulSoup
 from io import BytesIO
 from nltk.stem import PorterStemmer
 from urllib.parse import urlsplit, urlunsplit, quote
-import time
+from trafilatura import fetch_url, extract
 
 
 #
@@ -16,6 +18,7 @@ def remove_punctuation(text):
         text = text.replace(i, ' ')
     return text
 
+# Keeping this for if we want to set our own user agent since I can't figure it out using trafilatura
 #
 #   Returns the HTML in DOM format.
 #
@@ -26,6 +29,7 @@ def get_DOM_from_URL(url):
     try:
         c.setopt(c.URL, url)
         c.setopt(c.WRITEDATA, b)
+        c.setopt(pycurl.USERAGENT, "moffel")
 
         c.setopt(c.CONNECTTIMEOUT, 5)
         c.setopt(c.TIMEOUT, 10)
@@ -38,7 +42,6 @@ def get_DOM_from_URL(url):
         return None
     c.close()
     body = b.getvalue()
-
 
     encoding = None
     if content_type and 'charset=' in content_type:
@@ -55,23 +58,48 @@ def encode_url(url):
     return urlunsplit((parts.scheme, parts.netloc, path, query, fragment))
 
 
-#
-#   Returns the text of in the html of a site.
-#
+  # Returns the text of in the html of a site.
+
 def get_text_from_URL(url):
-    start_time = time.time()
     html = get_DOM_from_URL(url)
-    print(url + ' took ' + str(time.time() - start_time) + ' to scrape')
     if html is not None:
         return html.text
     else:
         return None
 
+def get_website_information(url):
+    if type(url) != str:
+        raise TypeError("url must be a string.")
+
+    response = fetch_url(url)
+    if response is None:
+        print(f"{url} didn't respond.")
+        return None
+
+    extracted = extract(response, output_format="json", with_metadata=True)
+
+    if extracted is None:
+        print(f"Failed to extract data from {url}.")
+        return None
+
+    data = json.loads(extracted)
+
+    DOM = BeautifulSoup(response, "html.parser")
+
+    found_links = [links.get('href') for links in DOM.findAll('a')]
+
+    return {
+        "text": data.get("raw_text") or None,
+        "title": data.get("title") or None,
+        "authors": data.get("author") or None,
+        "date": data.get("date") or None,
+        "links": found_links
+    }
+
 #
 #   Returns an array of the frecency of each word divided by the total amount of words in the text.
 #
 def stem_freq_words(text):
-    start_time = time.time()
     ps = PorterStemmer()
     array1 = text.split()
     array2 = {}
@@ -88,7 +116,6 @@ def stem_freq_words(text):
 
     array2 = {k: v for k, v in sorted(array2.items(), key=lambda item: item[1])}
 
-    print('and splitting text took ' + str(time.time() - start_time))
     return array2
 
 
@@ -103,3 +130,11 @@ def stem_words(query):
         array1[i] = ps.stem(array1[i])
 
     return array1
+
+def get_root_url(url):
+    # gets the first / after the scheme declaration.
+    end_of_root = url.find('/', len("https://"))
+    # If there are no other /'s in the url it returns -1 ,and you got the complete link otherwise we cut if off after
+    # the next / is found
+
+    return url if end_of_root == -1 else url[:end_of_root]
