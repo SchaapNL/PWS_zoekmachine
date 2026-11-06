@@ -1,13 +1,13 @@
 import pycurl
-import time
 import json
+import tldextract
 
 from bs4 import BeautifulSoup
 from io import BytesIO
 from nltk.stem import PorterStemmer
-from urllib.parse import urlsplit, urlunsplit, quote
 from trafilatura import fetch_url, extract
 
+import DomainInfoModule
 
 #
 #   Returns the text stripped of punctuation.
@@ -18,54 +18,34 @@ def remove_punctuation(text):
         text = text.replace(i, ' ')
     return text
 
-# Keeping this for if we want to set our own user agent since I can't figure it out using trafilatura
-#
-#   Returns the HTML in DOM format.
-#
-def get_DOM_from_URL(url):
-    url = encode_url(url)
+def api_call(api_call, header):
     b = BytesIO()
     c = pycurl.Curl()
+
+    if header is not None:
+        c.setopt(c.HTTPHEADER, header)
+
+    c.setopt(c.URL, api_call)
+    c.setopt(c.WRITEDATA, b)
+    c.setopt(pycurl.USERAGENT, "moffel")
+    c.setopt(c.FOLLOWLOCATION, True)
+    c.setopt(c.TIMEOUT, 10)
+
     try:
-        c.setopt(c.URL, url)
-        c.setopt(c.WRITEDATA, b)
-        c.setopt(pycurl.USERAGENT, "moffel")
-
-        c.setopt(c.CONNECTTIMEOUT, 5)
-        c.setopt(c.TIMEOUT, 10)
-
         c.perform()
-        content_type = c.getinfo(c.CONTENT_TYPE)
-    except (UnicodeEncodeError, pycurl.error) as e:
-        print(f"Skipping bad URL: {url!r} ({e})")
+        status = c.getinfo(c.RESPONSE_CODE)
+    finally:
         c.close()
+
+    if status == 404:
+        print(f"No record found for {api_call}")
         return None
-    c.close()
-    body = b.getvalue()
 
-    encoding = None
-    if content_type and 'charset=' in content_type:
-        encoding = content_type.split('charset=')[-1].strip()
-
-    html = BeautifulSoup(body, 'html.parser', from_encoding=encoding)
-    return html
-
-def encode_url(url):
-    parts = urlsplit(url)
-    path = quote(parts.path, safe="/%")
-    query = quote(parts.query, safe="=&%")
-    fragment = quote(parts.fragment, safe="%")
-    return urlunsplit((parts.scheme, parts.netloc, path, query, fragment))
-
-
-  # Returns the text of in the html of a site.
-
-def get_text_from_URL(url):
-    html = get_DOM_from_URL(url)
-    if html is not None:
-        return html.text
-    else:
+    if status != 200:
+        print(f"HTTP status {status} for {api_call}")
         return None
+
+    return json.loads(b.getvalue().decode("utf-8"))
 
 def get_website_information(url):
     if type(url) != str:
@@ -84,16 +64,16 @@ def get_website_information(url):
 
     data = json.loads(extracted)
 
-    DOM = BeautifulSoup(response, "html.parser")
+    dom = BeautifulSoup(response, "html.parser")
 
-    found_links = [links.get('href') for links in DOM.findAll('a')]
+    found_links = [links.get('href') for links in dom.findAll('a')]
 
     return {
         "text": data.get("raw_text") or None,
         "title": data.get("title") or None,
         "authors": data.get("author") or None,
         "date": data.get("date") or None,
-        "links": found_links
+        "links": found_links,
     }
 
 #
@@ -118,6 +98,13 @@ def stem_freq_words(text):
 
     return array2
 
+def get_domain(url_or_host):
+    ext = tldextract.extract(url_or_host)
+
+    if not ext.domain or not ext.suffix:
+        return None
+
+    return f"{ext.domain}.{ext.suffix}"
 
 def stem_words(query):
     if type(query) != str:

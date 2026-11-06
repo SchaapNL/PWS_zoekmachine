@@ -1,6 +1,5 @@
 import time
 
-import json
 import Utils
 import LLM
 import math
@@ -79,12 +78,12 @@ def api_call_openalex(name):
         api_key = file.read()
     file.close()
 
-    api_info = Utils.get_text_from_URL(base_url + names + "&api_key=" + api_key)
+    api_info = Utils.api_call(base_url + names + "&api_key=" + api_key, None)
 
     if api_info is None:
         return None
 
-    return json.loads(api_info)
+    return api_info
 
 def get_best_author_options(full_name, data):
     results = data.get("results", [])

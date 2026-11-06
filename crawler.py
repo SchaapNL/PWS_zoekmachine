@@ -1,11 +1,12 @@
-import AuthorManager
+import AuthorModule
 import DatabaseManager as db
+import DomainInfoModule
 
 import time
 import Utils
 import sys
 
-def handle_links(links, url_root, con):
+def handle_links(links, url_root, con, original_site_id, original_site):
     for link in links:
         if link is None:
             continue
@@ -43,7 +44,17 @@ def handle_links(links, url_root, con):
 
     for link in links:
         if db.get_website_id(con, link) is None:
-            db.insert_websites(con, link)
+            db.insert_website(con, link)
+
+    link_sites(con, original_site_id, original_site, links)
+
+def link_sites(con, original_site_id, original_site, links):
+    website_ids = db.get_website_ids_from_links(con, links)
+
+    original_domain = Utils.get_domain(original_site)
+    websites = [(site[0], Utils.get_domain(site[1]) == original_domain) for site in website_ids]
+
+    db.insert_website_links(con, original_site_id, websites)
 
 def get_disallowed_urls(site):
     root_url = Utils.get_root_url(site)
@@ -72,10 +83,11 @@ def get_disallowed_urls(site):
     return disallowed
 
 def main():
-    max_scrape_amount = 1000
+    max_scrape_amount = 300
     scrape_limit = False
-    author_via_api = True
-    scrape = False
+    author_via_api = False
+    scrape = True
+    update_domains = True
 
     start_time = time.time()
 
@@ -84,11 +96,11 @@ def main():
 
     if scrape:
         sites = db.get_websites_to_crawl(con)
-        if len(sites) <= 0:
+        if sites is None or len(sites) <= 0:
             start_site = 'https://en.wikipedia.org/wiki/Bob_the_Builder'
 
             if db.get_website_id(con, start_site) is None:
-                db.insert_websites(con, start_site)
+                db.insert_website(con, start_site)
                 sites = [[db.get_website_id(con, start_site), start_site]]
 
         i = 0
@@ -112,12 +124,23 @@ def main():
         for author in db.get_unrated_authors(con):
             site = db.get_website_url(con, author[0])
 
-            authors = AuthorManager.get_authors(site)
+            authors = AuthorModule.get_authors(site)
             if authors is not None:
                 for author_info in authors:
 
-                    score = AuthorManager.get_author_score(author_info) if author_info is not None else -1
+                    score = AuthorModule.get_author_score(author_info) if author_info is not None else -1
                     db.set_author_score(con, author[0], author[1], float(score))
+
+    if update_domains:
+        domains = db.get_domains_to_update(con)
+        print(domains)
+        for domain in domains:
+            domain_info = DomainInfoModule.get_rdap_dates(domain[1])
+            db.update_domain_info(con, domain[0],
+                                  int(domain_info.get("registration")),
+                                  int(domain_info.get("last_changed"))
+                                  )
+
 
     print(f"{time.time() - start_time} seconds.")
 
@@ -144,6 +167,10 @@ def scrape_site(website_id, url, con):
         for author in site_info.get("authors").split(";"):
             db.insert_author(con, website_id, author, None)
 
+    domain = Utils.get_domain(url)
+    domain_id = db.get_or_create_domain_id(con, domain)
+    db.update_website_domain(con, website_id, domain_id)
+
     db.update_last_crawled(con, website_id, int(time.time()))
 
 def get_websites_to_crawl(con):
@@ -162,7 +189,8 @@ def get_websites_to_crawl(con):
             return get_websites_to_crawl(con)
 
         root_url = Utils.get_root_url(website[1])
-        handle_links(site_info.get("links"), root_url, con)
+        links = site_info.get("links")
+        handle_links(links, root_url, con, website[0], website[1])
 
         db.update_last_scanned_sites(con, website[0], int(time.time()))
 
@@ -170,7 +198,6 @@ def get_websites_to_crawl(con):
 
     else:
         sys.exit("All websites were crawled successfully")
-
 
 if __name__ == '__main__':
     main()
