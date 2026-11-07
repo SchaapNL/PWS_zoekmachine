@@ -696,6 +696,7 @@ def get_website_score2(connection, words):
                 FROM word_frequencies wf
                 JOIN weights ON weights.word = wf.word
                 GROUP BY wf.website_id
+                HAVING score > 0
             ),
             author_list AS (
                 SELECT website_id,
@@ -721,7 +722,7 @@ def get_website_score2(connection, words):
             Select w.link, s.score, a.authors, d.domain_registration, d.domain_last_changed, 
                 l.same_domain, l.other_domain, b.same_domain, b.other_domain
             FROM websites w
-            LEFT JOIN scores s ON s.website_id = w.website_id
+            RIGHT JOIN scores s ON s.website_id = w.website_id
             LEFT JOIN author_list a ON a.website_id = w.website_id
             LEFT JOIN domains d ON d.domain_id = w.domain_id
             LEFT JOIN links_count l ON l.website_id = w.website_id
@@ -731,8 +732,6 @@ def get_website_score2(connection, words):
             LIMIT 50
             """, words)
         return cursor.fetchall()
-
-
 
     except Exception as e:
         print('get_website_score failed')

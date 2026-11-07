@@ -20,6 +20,10 @@ def search(query):
     query = Utils.stem_words(query)
 
     raw_sites_info = db.get_website_score2(con, query)
+
+    if raw_sites_info is None or len(raw_sites_info) == 0:
+        return []
+
     max_match = raw_sites_info[0][1]
 
     sites_info = []
@@ -60,8 +64,6 @@ def search(query):
 
     sites_info.sort(key=lambda x: x['scores']['final_score'], reverse=True)
     return sites_info
-
-
 
 def get_authors_score(authors):
     scores = []
@@ -112,7 +114,7 @@ def get_link_score(in_links, out_links):
 def main():
     start_time = time.time()
 
-    query = 'bob builder'
+    query = 'ka;sdjlkfjasd'
     search_results = search(query)
 
     if search_results is None or len(search_results) == 0:
