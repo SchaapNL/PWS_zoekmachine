@@ -3,7 +3,7 @@ import Utils
 import time
 import math
 
-base_author_score = 3
+base_author_score = 20
 weights = {
         "match": 10,
         'authors': 4,
@@ -19,7 +19,7 @@ def search(query):
     query = Utils.remove_punctuation(query)
     query = Utils.stem_words(query)
 
-    raw_sites_info = db.get_website_score2(con, query)
+    raw_sites_info = db.get_website_score(con, query)
 
     if raw_sites_info is None or len(raw_sites_info) == 0:
         return []
@@ -38,7 +38,7 @@ def search(query):
         else:
             authors.append({'author': "not found", 'score': "N/A"})
 
-        info = {'link': site[0], 'authors': authors,
+        info = {'link': site[0], 'authors': authors, 'title': site[9],
                 'site_age': site[3] or "N/A", 'site_update': site[4] or "N/A",
                 'in_links': site[5] or 0, 'out_links': site[6] or 0,
                 'in_back_links': site[7] or 0, 'out_back_links': site[8] or 0}
@@ -74,12 +74,12 @@ def get_authors_score(authors):
     while None in scores:
         scores.remove(None)
 
-    return sum(scores) / len(scores) if scores else 0
+    return sum(scores) / len(scores) if scores else base_author_score
 
 def get_author_score(author):
     if author['author'] == "not found":
         return 0
-    if author['score'] == "N/A":
+    if author['score'] == "N/A" or author['score'] == -1:
         return None
     else:
         return author['score'] or base_author_score
@@ -103,19 +103,15 @@ def get_site_update_score(site_update):
 def get_link_score(in_links, out_links):
     if out_links == 0 and in_links == 0:
         return 0
-    out_ratio = out_links / (in_links + out_links)
-    if out_ratio > 0.95:
-        return 0
 
-    else:
-        total = out_links + min(math.log(in_links, 10), 0,15*out_links)
-        return min(30*math.log(1+0.5*total), 100)
+    total = out_links + min(math.log(1 + in_links, 2), 0,15*out_links)
+    return min(30*math.log(1+0.5*total), 100)
 
 def main():
     start_time = time.time()
 
-    query = 'ka;sdjlkfjasd'
-    search_results = search(query)
+    query = 'bob'
+    search_results = search(query)[0].get('info').get('title')
 
     if search_results is None or len(search_results) == 0:
         print('no results')

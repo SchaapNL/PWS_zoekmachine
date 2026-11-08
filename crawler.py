@@ -167,6 +167,9 @@ def scrape_site(website_id, url, con):
         for author in site_info.get("authors").split(";"):
             db.insert_author(con, website_id, author, None)
 
+    if site_info.get("title") is not None:
+        db.insert_title(con, website_id, site_info.get("title"))
+
     domain = Utils.get_domain(url)
     domain_id = db.get_or_create_domain_id(con, domain)
     db.update_website_domain(con, website_id, domain_id)

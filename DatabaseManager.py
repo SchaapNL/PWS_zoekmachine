@@ -25,6 +25,7 @@ def create_tables(connection):
             CREATE TABLE IF NOT EXISTS websites (
                 website_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 link TEXT NOT NULL,
+                title TEXT,
                 domain_id INTEGER,
                 last_crawled INTEGER,
                 last_scanned_sites INTEGER,
@@ -445,56 +446,6 @@ def set_author_score(connection, website_id, author, score):
         print('set_author_score failed')
         print(e)
 
-def get_website_score(connection, weights):
-    if type(weights) != list:
-        raise ValueError('weights must be a list')
-
-    if not weights:
-        return []
-
-    whens = "".join("WHEN ? THEN ?" for _ in weights)
-
-    params = []
-    for weight in weights:
-        params.append(weight[0])
-        params.append(weight[1])
-
-    try:
-        cursor = connection.cursor()
-        cursor.execute(f"""
-            SELECT website_id, SUM(hoeveelheid / CASE word {whens} ELSE 0 END) AS score
-            FROM word_frequencies
-            GROUP BY website_id
-            HAVING score IS NOT NULL
-            ORDER BY score DESC""", params)
-        return cursor.fetchall()
-
-    except Exception as e:
-        print('get_website_score failed')
-        print(e)
-
-def get_weights(connection, words):
-    if type(words) != list:
-        raise ValueError('words must be a list')
-
-    if not words:
-        return []
-
-    try:
-        cursor = connection.cursor()
-
-        placeholders = ','.join(['?'] * len(words))
-        cursor.execute(f"""SELECT word, count(*) 
-                FROM word_frequencies 
-                WHERE word IN ({placeholders})
-                GROUP BY word""", words)
-
-        return cursor.fetchall()
-
-    except Exception as e:
-        print('get_weights failed')
-        print(e)
-
 def get_authors_from_site_ids(connection, site_ids):
     if type(site_ids) != list:
         raise ValueError('site_ids must be a list')
@@ -653,11 +604,11 @@ def get_or_create_website_id(connection, website):
     insert_website(connection, website)
     return get_website_id(connection, website)
 
-def get_domains_to_update(con):
+def get_domains_to_update(connection):
     try:
         week_ago = time.time() - 7*24*60*60
 
-        cursor = con.cursor()
+        cursor = connection.cursor()
         cursor.execute(f"""SELECT domain_id, domain_name 
             FROM domains 
             WHERE last_updated IS NULL OR last_updated < {week_ago}""")
@@ -671,12 +622,25 @@ def get_domains_to_update(con):
         print('get_domains_to_update failed')
         print(e)
 
-def get_website_score2(connection, words):
+def insert_title(connection, website_id, title):
+    if type(title) != str:
+        raise ValueError('title must be a string')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute(f"""UPDATE websites SET title = ? WHERE website_id = ?""", (title, website_id))
+
+        connection.commit()
+
+    except Exception as e:
+        print('insert_title failed')
+        print(e)
+
+def get_website_score(connection, words):
     if type(words) != list:
         raise ValueError('words must be a list')
 
     if not words:
-        print("AHHHHHH")
         return []
 
     try:
@@ -720,7 +684,7 @@ def get_website_score2(connection, words):
             )
             
             Select w.link, s.score, a.authors, d.domain_registration, d.domain_last_changed, 
-                l.same_domain, l.other_domain, b.same_domain, b.other_domain
+                l.same_domain, l.other_domain, b.same_domain, b.other_domain, w.title
             FROM websites w
             RIGHT JOIN scores s ON s.website_id = w.website_id
             LEFT JOIN author_list a ON a.website_id = w.website_id
