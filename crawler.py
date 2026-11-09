@@ -6,7 +6,7 @@ import time
 import Utils
 import sys
 
-def handle_links(links, url_root, con, original_site_id, original_site):
+def handle_links(links, url_root, con):
     for link in links:
         if link is None:
             continue
@@ -46,8 +46,6 @@ def handle_links(links, url_root, con, original_site_id, original_site):
         if db.get_website_id(con, link) is None:
             db.insert_website(con, link)
 
-    link_sites(con, original_site_id, original_site, links)
-
 def link_sites(con, original_site_id, original_site, links):
     website_ids = db.get_website_ids_from_links(con, links)
 
@@ -83,8 +81,8 @@ def get_disallowed_urls(site):
     return disallowed
 
 def main():
-    max_scrape_amount = 300
-    scrape_limit = False
+    max_scrape_amount = 50
+    scrape_limit = True
     author_via_api = False
     scrape = True
     update_domains = True
@@ -133,7 +131,6 @@ def main():
 
     if update_domains:
         domains = db.get_domains_to_update(con)
-        print(domains)
         for domain in domains:
             domain_info = DomainInfoModule.get_rdap_dates(domain[1])
             db.update_domain_info(con, domain[0],
@@ -170,6 +167,11 @@ def scrape_site(website_id, url, con):
     if site_info.get("title") is not None:
         db.insert_title(con, website_id, site_info.get("title"))
 
+    if site_info.get("date") is not None:
+        db.insert_website_date(con, website_id, Utils.timestamp_to_epoch(site_info.get("date")))
+
+    link_sites(con, website_id, url, site_info.get("links"))
+
     domain = Utils.get_domain(url)
     domain_id = db.get_or_create_domain_id(con, domain)
     db.update_website_domain(con, website_id, domain_id)
@@ -193,7 +195,7 @@ def get_websites_to_crawl(con):
 
         root_url = Utils.get_root_url(website[1])
         links = site_info.get("links")
-        handle_links(links, root_url, con, website[0], website[1])
+        handle_links(links, root_url, con)
 
         db.update_last_scanned_sites(con, website[0], int(time.time()))
 

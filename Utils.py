@@ -2,6 +2,7 @@ import pycurl
 import json
 import tldextract
 
+from datetime import datetime
 from bs4 import BeautifulSoup
 from io import BytesIO
 from nltk.stem import PorterStemmer
@@ -105,6 +106,9 @@ def get_domain(url_or_host):
         return None
 
     return f"{ext.domain}.{ext.suffix}"
+
+def timestamp_to_epoch(timestamp):
+    return int(datetime.fromisoformat(timestamp).timestamp())
 
 def stem_words(query):
     if type(query) != str:

@@ -111,7 +111,7 @@ def main():
     start_time = time.time()
 
     query = 'bob'
-    search_results = search(query)[0].get('info').get('title')
+    search_results = search(query)
 
     if search_results is None or len(search_results) == 0:
         print('no results')

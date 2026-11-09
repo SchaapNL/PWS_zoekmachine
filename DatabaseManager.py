@@ -29,6 +29,7 @@ def create_tables(connection):
                 domain_id INTEGER,
                 last_crawled INTEGER,
                 last_scanned_sites INTEGER,
+                date INTEGER,
                 FOREIGN KEY (domain_id) REFERENCES domain (domain_id)
             );
             ''')
@@ -636,6 +637,22 @@ def insert_title(connection, website_id, title):
         print('insert_title failed')
         print(e)
 
+def insert_website_date(connection, website_id, date):
+    if type(date) != int:
+        raise ValueError('date must be an int')
+    if type(website_id) != int:
+        raise ValueError('websiteId must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute("""UPDATE websites SET date = ? WHERE website_id = ?""", (date, website_id))
+
+        connection.commit()
+
+    except Exception as e:
+        print('insert_website_age failed')
+        print(e)
+
 def get_website_score(connection, words):
     if type(words) != list:
         raise ValueError('words must be a list')
@@ -683,7 +700,7 @@ def get_website_score(connection, words):
             GROUP BY link_id
             )
             
-            Select w.link, s.score, a.authors, d.domain_registration, d.domain_last_changed, 
+            Select w.link, s.score, a.authors, d.domain_registration, w.date, 
                 l.same_domain, l.other_domain, b.same_domain, b.other_domain, w.title
             FROM websites w
             RIGHT JOIN scores s ON s.website_id = w.website_id
