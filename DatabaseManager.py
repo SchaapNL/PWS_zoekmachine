@@ -30,6 +30,7 @@ def create_tables(connection):
                 last_crawled INTEGER,
                 last_scanned_sites INTEGER,
                 date INTEGER,
+                size INTEGER,
                 FOREIGN KEY (domain_id) REFERENCES domain (domain_id)
             );
             ''')
@@ -651,6 +652,22 @@ def insert_website_date(connection, website_id, date):
 
     except Exception as e:
         print('insert_website_age failed')
+        print(e)
+
+def insert_website_size(connection, website_id, size):
+    if type(size) != int:
+        raise ValueError('size must be an int')
+    if type(website_id) != int:
+        raise ValueError('websiteId must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute("""UPDATE websites SET size = ? WHERE website_id = ?""", (size, website_id))
+
+        connection.commit()
+
+    except Exception as e:
+        print('insert_website_size failed')
         print(e)
 
 def get_website_score(connection, words):

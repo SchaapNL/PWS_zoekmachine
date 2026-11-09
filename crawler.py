@@ -159,6 +159,7 @@ def scrape_site(website_id, url, con):
         word_freq_dict = Utils.stem_freq_words(text)
 
         db.insert_word_frequencies(con, website_id, word_freq_dict)
+        db.insert_website_size(con, website_id, len(text))
 
     if site_info.get("authors") is not None:
         for author in site_info.get("authors").split(";"):
