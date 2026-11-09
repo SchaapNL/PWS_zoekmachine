@@ -504,6 +504,19 @@ def update_domain_info(connection, domain_id, domain_registration, domain_last_c
         print('update_domain_info failed')
         print(e)
 
+def update_domain_last_updated(connection, domain_id):
+    if type(domain_id) != int:
+        raise ValueError('domainId must be an int')
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute(f"""UPDATE domains SET last_updated = ? WHERE domain_id = ?""", (int(time.time()), domain_id,))
+        connection.commit()
+
+    except Exception as e:
+        print('update_domain_last_updated failed')
+        print(e)
+
 def insert_link(connection, website_id, link_id):
     if type(website_id) != int:
         raise ValueError('websiteId must be an int')
@@ -609,6 +622,7 @@ def get_or_create_website_id(connection, website):
 def get_domains_to_update(connection):
     try:
         week_ago = time.time() - 7*24*60*60
+        week_ago = time.time() - 1
 
         cursor = connection.cursor()
         cursor.execute(f"""SELECT domain_id, domain_name 
