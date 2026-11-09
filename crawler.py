@@ -82,7 +82,7 @@ def get_disallowed_urls(site):
 
 def main():
     max_scrape_amount = 50
-    scrape_limit = True
+    scrape_limit = False
     author_via_api = False
     scrape = True
     update_domains = True
@@ -163,6 +163,8 @@ def scrape_site(website_id, url, con):
 
     if site_info.get("authors") is not None:
         for author in site_info.get("authors").split(";"):
+            if "Authority control databases" in author: continue
+
             db.insert_author(con, website_id, author, None)
 
     if site_info.get("title") is not None:
