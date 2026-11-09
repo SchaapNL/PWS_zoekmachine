@@ -143,6 +143,7 @@ def main():
                                       int(domain_info.get("registration")),
                                       int(domain_info.get("last_changed"))
                                       )
+
             crawl_time = time.time() - last_crawl
             if crawl_time < 1:
                 time.sleep(1.5-crawl_time)

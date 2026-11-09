@@ -622,7 +622,6 @@ def get_or_create_website_id(connection, website):
 def get_domains_to_update(connection):
     try:
         week_ago = time.time() - 7*24*60*60
-        week_ago = time.time() - 1
 
         cursor = connection.cursor()
         cursor.execute(f"""SELECT domain_id, domain_name 
