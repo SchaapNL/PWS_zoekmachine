@@ -10,6 +10,9 @@ def get_rdap_dates(url_or_host):
 
     data = Utils.api_call(url, http_header)
 
+    if data is None:
+        return None
+
     events = {event.get("eventAction"): event.get("eventDate") for event in data.get("events", [])}
     registration = events.get("registration")
     last_changed = events.get("last changed")

@@ -84,7 +84,7 @@ def main():
     max_scrape_amount = 50
     scrape_limit = False
     author_via_api = False
-    scrape = True
+    scrape = False
     update_domains = True
 
     start_time = time.time()
@@ -133,6 +133,8 @@ def main():
         domains = db.get_domains_to_update(con)
         for domain in domains:
             domain_info = DomainInfoModule.get_rdap_dates(domain[1])
+            if domain_info is None: continue
+
             db.update_domain_info(con, domain[0],
                                   int(domain_info.get("registration")),
                                   int(domain_info.get("last_changed"))
