@@ -132,11 +132,20 @@ def main():
     if update_domains:
         domains = db.get_domains_to_update(con)
         for domain in domains:
+            last_crawl = time.time()
             domain_info = DomainInfoModule.get_rdap_dates(domain[1])
-            db.update_domain_info(con, domain[0],
-                                  int(domain_info.get("registration")),
-                                  int(domain_info.get("last_changed"))
-                                  )
+
+            if domain_info is None:
+                db.update_domain_last_updated(con, domain[0])
+            else:
+                db.update_domain_info(con, domain[0],
+                                      int(domain_info.get("registration")),
+                                      int(domain_info.get("last_changed"))
+                                      )
+
+            crawl_time = time.time() - last_crawl
+            if crawl_time < 1:
+                time.sleep(1.5-crawl_time)
 
 
     print(f"{time.time() - start_time} seconds.")
