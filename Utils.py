@@ -63,7 +63,10 @@ def get_website_information(url):
         print(f"Failed to extract data from {url}.")
         return None
 
-    data = json.loads(extracted)
+    try:
+        data = json.loads(extracted)
+    except json.decoder.JSONDecodeError:
+        return None
 
     dom = BeautifulSoup(response, "html.parser")
 
