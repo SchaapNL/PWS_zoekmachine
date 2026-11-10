@@ -1,0 +1,51 @@
+body {
+    background: #344157;
+    margin: 5%;
+}
+
+.logo {
+    text-align: center;
+}
+
+.search-row {
+    background-color: #262626;
+    border:5px solid #363636;
+    border-radius:70px;
+    padding:10px;
+    vertical-align: middle;
+}
+
+.search-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#name {
+    font-family: 'contl', sans-serif;
+    font-size: 128px;
+    color:white;
+    margin-top: 0px;
+
+}
+
+#search-input {
+height: 50px;
+width: 750px;
+font-size: 32px;
+color: #808080;
+outline: none;
+}
+
+#search-button:hover {
+    scale: 1.05;
+}
+
+::placeholder {
+    color: #404040;
+}
+
+@font-face {
+    font-family: 'contl';
+    src: url('fonts/contl.ttf') format('truetype');
+}

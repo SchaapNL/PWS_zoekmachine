@@ -81,10 +81,10 @@ def get_disallowed_urls(site):
     return disallowed
 
 def main():
-    max_scrape_amount = 50
+    max_scrape_amount = 100
     scrape_limit = False
-    author_via_api = False
-    scrape = False
+    author_via_api = True
+    scrape = True
     update_domains = True
 
     start_time = time.time()
@@ -132,21 +132,12 @@ def main():
     if update_domains:
         domains = db.get_domains_to_update(con)
         for domain in domains:
-            print("bob")
-            last_crawl = time.time()
             domain_info = DomainInfoModule.get_rdap_dates(domain[1])
+            db.update_domain_info(con, domain[0],
+                                  int(domain_info.get("registration")),
+                                  int(domain_info.get("last_changed"))
+                                  )
 
-            if domain_info is None:
-                db.update_domain_last_updated(con, domain[0])
-            else:
-                db.update_domain_info(con, domain[0],
-                                      int(domain_info.get("registration")),
-                                      int(domain_info.get("last_changed"))
-                                      )
-
-            crawl_time = time.time() - last_crawl
-            if crawl_time < 1:
-                time.sleep(1.5-crawl_time)
 
     print(f"{time.time() - start_time} seconds.")
 
@@ -172,8 +163,6 @@ def scrape_site(website_id, url, con):
 
     if site_info.get("authors") is not None:
         for author in site_info.get("authors").split(";"):
-            if "Authority control databases" in author: continue
-
             db.insert_author(con, website_id, author, None)
 
     if site_info.get("title") is not None:

@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for
+
 import Search
 
 app = Flask(__name__)
@@ -17,9 +18,10 @@ def search():
 
 @app.route('/search/<query>')
 def search_for(query):
-    links = Search.search(query)
+    results = Search.search(query)
 
-    return render_template("search.html", query = query, links = links)
+    return render_template("search.html", query = query, results = results,
+                           colors = 'score_A')
 
 if __name__ == '__main__':
     app.run()

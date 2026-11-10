@@ -44,7 +44,7 @@ def search(query):
                 'in_back_links': site[7] or 0, 'out_back_links': site[8] or 0}
 
         scores = {'final_score': None,
-                  "match": site[1] / max_match * 100,
+                  'match': site[1] / max_match * 100,
                   'authors': get_authors_score(info['authors']),
                   'site_age': get_site_age_score(info['site_age']),
                   'site_update': get_site_update_score(info['site_update']),
@@ -58,7 +58,19 @@ def search(query):
 
         scores['final_score'] = final_score / sum(weights.values())
 
-        sites_info.append({'info': info, 'scores': scores})
+        colors = {'final_score': get_color(scores['final_score']),
+                  'match': get_color(scores['match']),
+                  'authors': get_color(scores['authors']),
+                  'site_age': get_color(scores['site_age']),
+                  'site_update': get_color(scores['site_update']),
+                  'link': get_color(scores['link']),
+                  'back_link': get_color(scores['back_link'])
+                  }
+
+        for key in scores.keys():
+            scores[key] = round(scores[key])
+
+        sites_info.append({'info': info, 'scores': scores, 'colors': colors})
 
     db.close_connection(con)
 
@@ -73,6 +85,7 @@ def get_authors_score(authors):
 
     while None in scores:
         scores.remove(None)
+    scores = [item for item in scores if not isinstance(item, str)]
 
     return sum(scores) / len(scores) if scores else base_author_score
 
@@ -106,6 +119,20 @@ def get_link_score(in_links, out_links):
 
     total = out_links + min(math.log(1 + in_links, 2), 0,15*out_links)
     return min(30*math.log(1+0.5*total), 100)
+
+def get_color(score):
+    if score >= 80:
+        return 'score_A'
+    if 60 <= score < 80:
+        return 'score_B'
+    if 40 <= score < 60:
+        return 'score_C'
+    if 20 <= score < 40:
+        return 'score_D'
+    if 20 >= score > 0:
+        return 'score_F'
+    return 'score_none'
+
 
 def main():
     start_time = time.time()

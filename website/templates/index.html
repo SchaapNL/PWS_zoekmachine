@@ -2,14 +2,24 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Zoekmachine</title>
+        <title>MoffelSearch</title>
+        <link rel="icon" type="image/png" href="../static/images/Moffel.png">
+        <link rel="stylesheet" href="../static/index.css">
     </head>
     <body>
-        <h2>Zoek is iets</h2>
-        <form method="post" action="/search">
-            <input name="query" type="text" required>
-            <br>
-            <button type="submit">Search</button>
-        </form>
+        <div class="logo">
+            <img src="../static/images/Moffel.png" alt="Moffel" height="250">
+            <h1 id="name">MoffelSearch</h1>
+        </div>
+
+        <div class="search-container">
+            <form method="post" action="/search">
+                <input class="search-row" id="search-input" name="query" type="text" placeholder="Search..." required >
+
+                <button class="search-row" id="search-button" type="submit">
+                <img src="../static/images/SearchIcon.png" alt="Search" height="50px">
+                </button>
+            </form>
+        </div>
     </body>
 </html>

@@ -1,0 +1,160 @@
+.search-text {
+    text-align: left;
+    font-family: 'contl', sans-serif;
+    font-size: 48px;
+    color:white;
+}
+
+.result {
+    position: relative;
+    text-align: left;
+    height: 80px;
+    width: fit-content;
+    background-color: #262626;
+    border:5px solid #363636;
+    border-radius:20px;
+
+    font-family: 'contl', sans-serif;
+}
+
+.part {
+    display: inline-block;
+    vertical-align: middle;
+    height: 80px;
+    width: fit-content;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    height: 80px;
+    width: 500px;
+    background-color: #b2b2b200;
+    border:5px solid #80808000;
+    border-radius:20px;
+
+    left: 100%;
+    top: -10px;
+    z-index: 1;
+}
+
+.score-item {
+    height: 80px;
+    width: 80px;
+    margin-left: 5px;
+    border:5px solid #363636;
+    border-radius:20px;
+    vertical-align: middle;
+}
+
+.result:hover .dropdown-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+}
+
+.score-name {
+    text-align: center;
+    line-height: 30px;
+    font-size: 14px;
+}
+
+.score-value {
+    text-align: center;
+    line-height: 50px;
+    font-size: 32px;
+}
+
+#link {
+    text-align: left;
+    padding-left: 20px;
+    line-height: 50px;
+    font-size: 32px;
+}
+
+.url {
+    text-align: left;
+    padding-left: 40px;
+    line-height: 25px;
+    font-size: 24px;
+    color: #a8a8a8;
+}
+
+#final_score {
+    text-align: center;
+    width: 80px;
+    border-radius: 15px;
+    line-height: 80px;
+    font-size: 32px;
+}
+
+body {
+    margin: 5%;
+    background: #344157;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0px;
+    padding: 0px;
+    width:fit-content
+}
+
+.part li {
+    margin: 0px;
+    padding: 0px;
+    width: 900px;
+}
+
+#results {
+    margin-bottom: 10px;
+    padding: 0px;
+}
+
+p {
+    margin: 0px;
+    padding: 0px;
+}
+
+a {
+    text-decoration: none;
+}
+
+@font-face {
+    font-family: 'contl';
+    src: url('fonts/contl.ttf') format('truetype');
+}
+
+.score_A {
+    background-color: #409445;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.score_B {
+    background-color: #619440;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.score_C {
+    background-color: #d1c76b;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.score_D {
+    background-color: #d1874b;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.score_F {
+    background-color: #944040;
+    display: inline-block;
+    vertical-align: middle;
+}
+.score_none {
+    background-color: #828282;
+    display: inline-block;
+    vertical-align: middle;
+}

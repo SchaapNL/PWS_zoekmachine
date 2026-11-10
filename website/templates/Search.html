@@ -2,17 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{query}}</title>
+    <title>{{query}} - MoffelSearch</title>
+    <link rel="icon" type="image/png" href="../static/images/Moffel.png">
+    <link rel="stylesheet" href="../static/search.css">
 </head>
 <body>
-    <h2>You searched {{query}}</h2>
-    {% if links.__len__() == 0 %}
-    <img src="{{ url_for('static', filename='NoSites.png') }}" alt="No websites found.">
+    <h2 class="search-text">Showing results for: {{query}}</h2>
+    {% if results.__len__() == 0 %}
+    <img src="../static/images/NoSites.png" alt="No websites found.">
     {% else %}
     <ul>
-        {% for link in links %}
-        <li>
-            <a href="{{link}}"> {{link}}</a>
+        {% for result in results %}
+        <li class="result" id="results" style="background-color:;">
+            <ul class="part">
+                <li>
+                    <a id="link" href="{{result['info']['link']}}"> <b>{{result['info']['title']}}</b></a>
+                </li>
+                <li>
+                    {% if result['info']['link'].__len__() < 76 %}
+                    <a class="url" href="{{result['info']['link']}}"> {{result['info']['link']}}</a>
+                    {% else %}
+                    <a class="url" href="{{result['info']['link']}}"> {{result['info']['link'][:75]}}... </a>
+                    {% endif %}
+                </li>
+            </ul>
+
+            <div class="part, {{result['colors']['final_score']}}" id="final_score">
+                <p class="score-name"><b>Score</b></p>
+                <p class="score-value"><b>{{result['scores']['final_score']}}</b></p>
+            </div>
+
+
+            <div class="dropdown-content">
+                <div class="score-item {{result['colors']['match']}}">
+                    <p class="score-name"><b>Relevance</b></p>
+                    <p class="score-value">{{result['scores']['match']}}</p>
+                </div>
+
+                <div class="score-item {{result['colors']['authors']}}">
+                    <p class="score-name"><b>Author</b></p>
+                    <p class="score-value">{{result['scores']['authors']}}</p>
+                </div>
+
+                <div class="score-item {{result['colors']['site_age']}}">
+                    <p class="score-name"><b>Site Age</b></p>
+                    <p class="score-value">{{result['scores']['site_age']}}</p>
+                </div>
+
+                <div class="score-item {{result['colors']['site_update']}}">
+                    <p class="score-name"><b>Domain Age</b></p>
+                    <p class="score-value">{{result['scores']['site_update']}}</p>
+                </div>
+
+                <div class="score-item {{result['colors']['link']}}">
+                    <p class="score-name"><b>Sources</b></p>
+                    <p class="score-value">{{result['scores']['link']}}</p>
+                </div>
+
+                <div class="score-item {{result['colors']['back_link']}}">
+                    <p class="score-name"><b>Sourced</b></p>
+                    <p class="score-value">{{result['scores']['back_link']}}</p>
+                </div>
+            </div>
         </li>
         {% endfor %}
     </ul>
