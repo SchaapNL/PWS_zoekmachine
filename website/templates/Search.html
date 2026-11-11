@@ -13,10 +13,14 @@
     {% else %}
     <ul>
         {% for result in results %}
-        <li class="result" id="results" style="background-color:;">
+        <li class="result" id="results">
             <ul class="part">
                 <li>
-                    <a id="link" href="{{result['info']['link']}}"> <b>{{result['info']['title']}}</b></a>
+                    {% if result['info']['title'].__len__() < 51 %}
+                    <a class="link" href="{{result['info']['link']}}"> <b>{{result['info']['title']}}</b></a>
+                    {% else %}
+                    <a class="link" href="{{result['info']['link']}}"> <b>{{result['info']['title'][:50]}}...</b></a>
+                    {% endif %}
                 </li>
                 <li>
                     {% if result['info']['link'].__len__() < 76 %}

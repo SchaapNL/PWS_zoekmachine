@@ -57,11 +57,7 @@ def link_sites(con, original_site_id, original_site, links):
             else:
                 links[links.index(link)] = None
 
-    print(links)
-
     website_ids = db.get_website_ids_from_links(con, links)
-
-    print(website_ids)
 
     original_domain = Utils.get_domain(original_site)
     websites = [(site[0], Utils.get_domain(site[1]) == original_domain) for site in website_ids]
@@ -95,10 +91,10 @@ def get_disallowed_urls(site):
     return disallowed
 
 def main():
-    max_scrape_amount = 100
-    scrape_limit = False
-    author_via_api = False
-    scrape = False
+    max_scrape_amount = 10000
+    scrape_limit = True
+    author_via_api = True
+    scrape = True
     update_domains = True
 
     start_time = time.time()
@@ -109,7 +105,7 @@ def main():
     if scrape:
         sites = db.get_websites_to_crawl(con)
         if sites is None or len(sites) <= 0:
-            start_site = 'https://en.wikipedia.org/wiki/Bob_the_Builder'
+            start_site = 'https://en.wikipedia.org/wiki/User:KiranBOT/MOSTREFS'
 
             if db.get_website_id(con, start_site) is None:
                 db.insert_website(con, start_site)

@@ -52,6 +52,9 @@ def search(query):
                   'back_link': get_link_score(int(info['in_back_links']), int(info['out_back_links']))
                   }
 
+        if type(info['title']) != str:
+            info['title'] = '-'
+
         final_score = 0
         for weight in weights.keys():
             final_score += weights[weight] * scores[weight]
