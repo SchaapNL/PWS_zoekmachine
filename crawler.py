@@ -81,8 +81,8 @@ def get_disallowed_urls(site):
     return disallowed
 
 def main():
-    max_scrape_amount = 100
-    scrape_limit = False
+    max_scrape_amount = 10000
+    scrape_limit = True
     author_via_api = True
     scrape = True
     update_domains = True
@@ -95,7 +95,7 @@ def main():
     if scrape:
         sites = db.get_websites_to_crawl(con)
         if sites is None or len(sites) <= 0:
-            start_site = 'https://en.wikipedia.org/wiki/Bob_the_Builder'
+            start_site = 'https://en.wikipedia.org/wiki/User:KiranBOT/MOSTREFS'
 
             if db.get_website_id(con, start_site) is None:
                 db.insert_website(con, start_site)
