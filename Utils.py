@@ -35,6 +35,10 @@ def api_call(api_call, header):
     try:
         c.perform()
         status = c.getinfo(c.RESPONSE_CODE)
+    except pycurl.error as e:
+        print(f"{api_call} failed")
+        print(e)
+        return None
     finally:
         c.close()
 

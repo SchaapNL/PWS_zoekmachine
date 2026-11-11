@@ -137,7 +137,8 @@ def get_color(score):
 def main():
     start_time = time.time()
 
-    query = 'bob'
+    query = "BRITNEY Spears lived up to the bomb part of “blond bombshell” when she lip sync-ed her way through her performance for “NFL Kickoff Live” on Thursday."
+
     search_results = search(query)
 
     if search_results is None or len(search_results) == 0:

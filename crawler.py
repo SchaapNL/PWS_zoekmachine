@@ -47,7 +47,21 @@ def handle_links(links, url_root, con):
             db.insert_website(con, link)
 
 def link_sites(con, original_site_id, original_site, links):
+    for link in links:
+        if link is None:
+            continue
+
+        if not 'https://' in link and not 'http://' in link:
+            if link[:1] == "/":
+                links[links.index(link)] = Utils.get_root_url(original_site) + link
+            else:
+                links[links.index(link)] = None
+
+    print(links)
+
     website_ids = db.get_website_ids_from_links(con, links)
+
+    print(website_ids)
 
     original_domain = Utils.get_domain(original_site)
     websites = [(site[0], Utils.get_domain(site[1]) == original_domain) for site in website_ids]
@@ -83,8 +97,8 @@ def get_disallowed_urls(site):
 def main():
     max_scrape_amount = 100
     scrape_limit = False
-    author_via_api = True
-    scrape = True
+    author_via_api = False
+    scrape = False
     update_domains = True
 
     start_time = time.time()
